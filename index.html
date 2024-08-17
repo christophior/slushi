@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slushie Mix Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  </head>
+  <body class="bg-gray-100">
+    <nav class="bg-white shadow">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex">
+            <div class="flex-shrink-0 flex items-center">
+              <span class="text-lg font-semibold">Slushie Mix Calculator</span>
+            </div>
+            <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <a
+                href="#"
+                class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+              >
+                Existing Recipes
+              </a>
+              <a
+                href="#"
+                class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+              >
+                Create New Recipe
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div id="app" class="py-12"></div>
+
+    <script type="text/babel">
+      function SlushieCalculator() {
+        const [unit, setUnit] = React.useState("ml");
+        const [ingredients, setIngredients] = React.useState([
+          { name: "", volume: "", servingSize: "", sugarPerServing: "", custom: false },
+        ]);
+
+        const popularIngredients = {
+          nonAlcoholic: [
+            { name: "Water", volume: "", servingSize: 100, sugarPerServing: 0 },
+            { name: "Orange Juice", volume: "", servingSize: 100, sugarPerServing: 9 },
+            { name: "Lemonade", volume: "", servingSize: 100, sugarPerServing: 10 },
+            { name: "Cola", volume: "", servingSize: 100, sugarPerServing: 11 },
+            { name: "Simple Syrup", volume: "", servingSize: 100, sugarPerServing: 65 },
+            { name: "Sugar", volume: "", servingSize: 100, sugarPerServing: 100 },
+          ],
+          alcoholic: [
+            { name: "Tequila", volume: "", servingSize: 50, sugarPerServing: 0 },
+            { name: "Vodka", volume: "", servingSize: 50, sugarPerServing: 0 },
+            { name: "Rum", volume: "", servingSize: 50, sugarPerServing: 0 },
+          ],
+        };
+
+        const convertToMl = (value) => (unit === "oz" ? value * 29.5735 : value);
+        const convertFromMl = (value) => (unit === "oz" ? value / 29.5735 : value);
+
+        const handleUnitChange = (newUnit) => {
+          setUnit(newUnit);
+          setIngredients(
+            ingredients.map((ingredient) => ({
+              ...ingredient,
+              volume: convertFromMl(convertToMl(parseFloat(ingredient.volume) || 0)).toFixed(2),
+              servingSize: convertFromMl(
+                convertToMl(parseFloat(ingredient.servingSize) || 0)
+              ).toFixed(2),
+            }))
+          );
+        };
+
+        const handleIngredientChange = (index, field, value) => {
+          const updatedIngredients = ingredients.map((ingredient, i) =>
+            i === index ? { ...ingredient, [field]: value } : ingredient
+          );
+          setIngredients(updatedIngredients);
+        };
+
+        const handleCustomToggle = (index) => {
+          const updatedIngredients = ingredients.map((ingredient, i) =>
+            i === index ? { ...ingredient, custom: !ingredient.custom, name: "" } : ingredient
+          );
+          setIngredients(updatedIngredients);
+        };
+
+        const addIngredient = () => {
+          setIngredients([
+            ...ingredients,
+            { name: "", volume: "", servingSize: "", sugarPerServing: "", custom: false },
+          ]);
+        };
+
+        const removeIngredient = (index) => {
+          const updatedIngredients = ingredients.filter((_, i) => i !== index);
+          setIngredients(updatedIngredients);
+        };
+
+        const calculateLevels = () => {
+          let totalVolume = 0;
+          let totalSugar = 0;
+          let valid = true;
+
+          ingredients.forEach((ingredient) => {
+            const volume = convertToMl(parseFloat(ingredient.volume)) || 0;
+            const sugarPerServing = parseFloat(ingredient.sugarPerServing) || 0;
+            const servingSize = convertToMl(parseFloat(ingredient.servingSize)) || 100;
+
+            if (volume > 0 && servingSize > 0) {
+              const sugarContent = (sugarPerServing / servingSize) * volume;
+              totalVolume += volume;
+              totalSugar += sugarContent;
+            } else {
+              valid = false;
+            }
+          });
+
+          const sugarPercentage = valid && totalVolume > 0 ? (totalSugar / totalVolume) * 100 : 0;
+
+          return {
+            totalVolume: valid ? convertFromMl(totalVolume).toFixed(2) : "-",
+            sugarPercentage: valid ? sugarPercentage.toFixed(2) : "-",
+            sugarOk: sugarPercentage >= 10 && sugarPercentage <= 15,
+          };
+        };
+
+        const result = calculateLevels();
+
+        return (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-white shadow-lg rounded-lg p-6">
+            <h2 className="text-3xl font-bold mb-6 text-center">Customize Your Slushie Mix</h2>
+            <p className="text-center text-gray-600 mb-6">
+              Optimal sugar content for freezing is between 10-15%, and alcohol content should not
+              exceed 10%.
+            </p>
+
+            <div className="unit-toggle flex justify-center mb-6 space-x-4">
+              <button
+                onClick={() => handleUnitChange("ml")}
+                className={`px-4 py-2 text-sm rounded ${
+                  unit === "ml" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
+                }`}
+              >
+                ml
+              </button>
+              <button
+                onClick={() => handleUnitChange("oz")}
+                className={`px-4 py-2 text-sm rounded ${
+                  unit === "oz" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800"
+                }`}
+              >
+                oz
+              </button>
+            </div>
+
+            {ingredients.map((ingredient, index) => (
+              <div key={index} className="border-b last:border-b-0 py-4 grid grid-cols-4 gap-4">
+                <div className="relative">
+                  <label
+                    className={`absolute top-0 left-0 transition-all ${
+                      ingredient.custom || ingredient.name ? "text-xs" : "text-sm"
+                    } ${ingredient.custom ? "text-blue-500" : "text-gray-700"}`}
+                  >
+                    Ingredient:
+                  </label>
+                  {ingredient.custom ? (
+                    <input
+                      type="text"
+                      value={ingredient.name}
+                      onChange={(e) => handleIngredientChange(index, "name", e.target.value)}
+                      className="pt-6 pb-1 block w-full border-0 border-b-2 border-gray-300 focus:ring-0 focus:border-blue-500"
+                    />
+                  ) : (
+                    <select
+                      onChange={(e) =>
+                        handleIngredientChange(index, "name", JSON.parse(e.target.value).name)
+                      }
+                      className="mt-6 block w-full bg-white border-0 border-b-2 border-gray-300 focus:ring-0 focus:border-blue-500"
+                    >
+                      <option value="">Select or choose custom...</option>
+                      <option
+                        value={JSON.stringify({ name: "custom" })}
+                        onClick={() => handleCustomToggle(index)}
+                      >
+                        Custom
+                      </option>
+                      <optgroup label="Non-Alcoholic">
+                        {popularIngredients.nonAlcoholic.map((item, i) => (
+                          <option key={i} value={JSON.stringify(item)}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Alcoholic">
+                        {popularIngredients.alcoholic.map((item, i) => (
+                          <option key={i} value={JSON.stringify(item)}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  )}
+                </div>
+                <div className="relative">
+                  <label className="absolute top-0 left-0 text-xs text-gray-700">
+                    Volume ({unit}):
+                  </label>
+                  <input
+                    type="number"
+                    value={ingredient.volume}
+                    onChange={(e) => handleIngredientChange(index, "volume", e.target.value)}
+                    className="pt-6 pb-1 block w-full border-0 border-b-2 border-gray-300 focus:ring-0 focus:border-blue-500"
+                  />
+                </div>
+                <div className="relative">
+                  <label className="absolute top-0 left-0 text-xs text-gray-700">
+                    Serving Size ({unit}):
+                  </label>
+                  <input
+                    type="number"
+                    value={ingredient.servingSize}
+                    onChange={(e) => handleIngredientChange(index, "servingSize", e.target.value)}
+                    className="pt-6 pb-1 block w-full border-0 border-b-2 border-gray-300 focus:ring-0 focus:border-blue-500"
+                  />
+                </div>
+                <div className="relative">
+                  <label className="absolute top-0 left-0 text-xs text-gray-700">
+                    Sugar Per Serving (g):
+                  </label>
+                  <input
+                    type="number"
+                    value={ingredient.sugarPerServing}
+                    onChange={(e) =>
+                      handleIngredientChange(index, "sugarPerServing", e.target.value)
+                    }
+                    className="pt-6 pb-1 block w-full border-0 border-b-2 border-gray-300 focus:ring-0 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            ))}
+            <div className="flex justify-between mt-6">
+              <button
+                onClick={addIngredient}
+                className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+              >
+                Add Another Ingredient
+              </button>
+            </div>
+
+            <div className="result mt-6 p-4 border rounded-lg bg-gray-100">
+              <h3 className="text-xl font-semibold mb-4">Results:</h3>
+              <p>
+                Total Volume: {result.totalVolume} {unit}
+              </p>
+              <p className={`text-lg ${result.sugarOk ? "text-green-500" : "text-red-500"}`}>
+                Sugar Percentage: {result.sugarPercentage}% {result.sugarOk ? "(OK)" : "(Adjust)"}
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.render(<SlushieCalculator />, document.getElementById("app"));
+    </script>
+  </body>
+</html>
