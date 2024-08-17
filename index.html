@@ -40,7 +40,7 @@
 
     <script type="text/babel">
       function SlushieCalculator() {
-        const [unit, setUnit] = React.useState("ml");
+        const [unit, setUnit] = React.useState("oz");
         const [ingredients, setIngredients] = React.useState([
           { name: "", volume: "", servingSize: "", sugarPerServing: "", custom: false },
         ]);
@@ -164,9 +164,9 @@
               <div key={index} className="border-b last:border-b-0 py-4 grid grid-cols-4 gap-4">
                 <div className="relative">
                   <label
-                    className={`absolute top-0 left-0 transition-all ${
-                      ingredient.custom || ingredient.name ? "text-xs" : "text-sm"
-                    } ${ingredient.custom ? "text-blue-500" : "text-gray-700"}`}
+                    className={`absolute top-0 left-0 transition-all text-xs ${
+                      ingredient.custom ? "text-blue-500" : "text-gray-700"
+                    }`}
                   >
                     Ingredient:
                   </label>
@@ -182,7 +182,7 @@
                       onChange={(e) =>
                         handleIngredientChange(index, "name", JSON.parse(e.target.value).name)
                       }
-                      className="mt-6 block w-full bg-white border-0 border-b-2 border-gray-300 focus:ring-0 focus:border-blue-500"
+                      className="mt-6 block w-full bg-white border-0 border-b-2 border-gray-300 focus:ring-0 focus:border-blue-500 pb-2"
                     >
                       <option value="">Select or choose custom...</option>
                       <option
